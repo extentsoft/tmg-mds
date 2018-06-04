@@ -1,9 +1,11 @@
 'use strict'
 
-[
+var prerequisites = [
     'NODE_ENV',
     'PORT'
-].forEach((name) => {
+];
+prerequisites.forEach((name) => {
+    console.log(name, '-', process.env[name]);
     if (!process.env[name]) {
         throw new Error('Environment variable ${name} is missing')
     }

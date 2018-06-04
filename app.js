@@ -7,6 +7,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var request = require('request');
+var profile = require('../modules/profile');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -66,6 +67,11 @@ app.get('/test2', function(req, res) {
 
 });
 
+app.get('/inquiry', (req, res) => {
+    res.json(profile.get(req.body.PARTNER_ID, req.body.PARTNER_NBR));
+});
+
+
 app.get('/test3', function(req, res) {
     var stmt = "select * from(select ROW_NUMBER() OVER (ORDER BY  MVM01P.MBCODE) AS ROWNUM, MVM01P.MBCODE,MVM01P.MBMEMC,MVM01P.MBEXP,";
     stmt += " MCRS2P.MBPOINT,MCRS2P.MBCEXP,MCRS2P.MBDATT,";
@@ -76,6 +82,8 @@ app.get('/test3', function(req, res) {
     stmt += " inner join MBRFLIB/MVM01P MVM01P on PM200MP.MBCODE = MVM01P.MBCODE";
     stmt += " inner join MBRFLIB/MCRS2P MCRS2P on PM200MP.MBCODE = MCRS2P.MBCODE";
     stmt += " inner join MBRFLIB/PM110MP PM110MP on PM200MP.PNID = PM110MP.PNID and PM200MP.PNNUM = PM110MP.PNNUM) as tbl";
+
+    profile.get();
 
 
     pool.query(stmt)
@@ -450,10 +458,8 @@ app.post('/redeem_mpoint', function(req, res) {
                 });
             }
 
-
             var cal_MPOINR = parseInt(current_point_result[0].MBPOINR) + cal_POINTBURN;
             var cal_MBPOINT = parseInt(current_point_result[0].MBPOINC) - cal_MPOINR;
-
 
             if (parseInt(current_point_result[0].MBPOINT) < cal_POINTBURN) {
                 res.json({

@@ -603,6 +603,7 @@ app.post('/redeem_mpoint', function(req, res) {
     pool.query(current_point_stmt)
         .then(function(current_point_result) {
             console.log(current_point_result);
+			console.log(current_point_result.length);
 			
             //MCRS2P
             var cal_POINTBURN = 0;
@@ -618,6 +619,10 @@ app.post('/redeem_mpoint', function(req, res) {
             var POINTBURN_EDC_TERMINAL_ = "";
             var POINTBURN_EDC_SALE_AMOUNT_ = 0;
             var POINTBURN_EDC_RATE = "";
+			
+			var check1 = [];
+			var check2 = [];
+			
             if (req.body.POINTBURN_TYPE == "DP") {
                 if ((typeof req.body.POINTBURN_FLAG == 'undefined') ||
                     (typeof req.body.POINTBURN_BRANCH == 'undefined') ||
@@ -626,25 +631,39 @@ app.post('/redeem_mpoint', function(req, res) {
                     (typeof req.body.POINTBURN_ITEM_CODE == 'undefined') ||
                     (typeof req.body.POINTBURN_PROMO_NUM == 'undefined') ||
                     (typeof req.body.POINTBURN_EDC_SHOP_NAME == 'undefined') ||
-                    (typeof req.body.POINTBURN_EDC_REFERENCE_NUM == 'undefined') ||
+                    (typeof req.body.POINTBURN_REFERENCE_NUM == 'undefined') ||
                     (typeof req.body.POINTBURN_APPV_NUM == 'undefined') ||
                     (typeof req.body.POINTBURN_EDC_RATE == 'undefined') ||
                     (typeof req.body.POINTBURN_EDC_SALE_AMOUNT == 'undefined') ||
                     (typeof req.body.POINTBURN_EDC_DISCOUNT_AMT == 'undefined') ||
                     (typeof req.body.POINTBURN_EDC_TERMINAL == 'undefined') ||
                     (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+					//check1 = [typeof req.body.POINTBURN_FLAG,typeof req.body.POINTBURN_BRANCH,typeof req.body.POINTBURN_DEPT,typeof req.body.POINTBURN_PROMO_NAME,typeof req.body.POINTBURN_ITEM_CODE,typeof req.body.POINTBURN_PROMO_NUM,typeof req.body.POINTBURN_EDC_SHOP_NAME,typeof req.body.POINTBURN_REFERENCE_NUM,typeof req.body.POINTBURN_APPV_NUM,typeof req.body.POINTBURN_EDC_RATE,typeof req.body.POINTBURN_EDC_SALE_AMOUNT ,typeof req.body.POINTBURN_EDC_DISCOUNT_AMT,typeof req.body.POINTBURN_EDC_TERMINAL,typeof req.body.POINTBURN_MPOINT];
+					
+					check1 = ['POINTBURN_FLAG','POINTBURN_BRANCH','POINTBURN_DEPT','POINTBURN_PROMO_NAME','POINTBURN_ITEM_CODE','POINTBURN_PROMO_NUM','POINTBURN_EDC_SHOP_NAME','POINTBURN_REFERENCE_NUM','POINTBURN_APPV_NUM','POINTBURN_EDC_RATE','POINTBURN_EDC_SALE_AMOUNT','POINTBURN_EDC_DISCOUNT_AMT','POINTBURN_EDC_TERMINAL','POINTBURN_MPOINT'];
+					
+					console.log(req.body);
+					for(i=0;i < check1.length;i++){
+						console.log(req.body[check1[i]]);
+						if(typeof req.body[check1[i]] == 'undefined'){
+							check2.push(check1[i]);
+						}
+					}
                     console.log('Field Error DP');
+					console.log("Missing Required Field : " + check2);
                     res.json({
 						"RESP_CDE": 401,
-						"message": "Missing Required Field"
+						"RESP_MSG": "Missing Required Field"
 					});
-                } else {
+                } /*else if(isNaN(req.body.POINTBURN_BRANCH) || isNaN(req.body.POINTBURN_EDC_SALE_AMOUNT) || isNaN(req.body.POINTBURN_EDC_DISCOUNT_AMT) || isNaN(req.body.POINTBURN_MPOINT)){
+					
+				} */else {
                     POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
                     POINTBURN_ITEM_CODE_ = req.body.POINTBURN_ITEM_CODE;
                     POINTBURN_MPOINT_ = parseInt(req.body.POINTBURN_MPOINT);
                     POINTBURN_EDC_DISCOUNT_AMT_ = parseInt(req.body.POINTBURN_EDC_DISCOUNT_AMT);
                     POINTBURN_APPV_NUM_ = req.body.POINTBURN_APPV_NUM;
-                    POINTBURN_EDC_REFERENCE_NUM_ = req.body.POINTBURN_EDC_REFERENCE_NUM;
+                    POINTBURN_EDC_REFERENCE_NUM_ = req.body.POINTBURN_REFERENCE_NUM;
                     POINTBURN_EDC_TERMINAL_ = req.body.POINTBURN_EDC_TERMINAL;
                     POINTBURN_EDC_SALE_AMOUNT_ = parseInt(req.body.POINTBURN_EDC_SALE_AMOUNT);
                     POINTBURN_EDC_RATE = req.body.POINTBURN_EDC_RATE;
@@ -662,7 +681,7 @@ app.post('/redeem_mpoint', function(req, res) {
                     console.log('Field Error MI');
                     res.json({
 						"RESP_CDE": 401,
-						"message": "Missing Required Field"
+						"RESP_MSG": "Missing Required Field"
 					});
                 } else {
                     POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
@@ -683,7 +702,7 @@ app.post('/redeem_mpoint', function(req, res) {
                     console.log('Field Error CC');
                     res.json({
 						"RESP_CDE": 401,
-						"message": "Missing Required Field"
+						"RESP_MSG": "Missing Required Field"
 					});
                 } else {
                     POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
@@ -704,7 +723,7 @@ app.post('/redeem_mpoint', function(req, res) {
                     console.log('Field Error SP');
                     res.json({
 						"RESP_CDE": 401,
-						"message": "Missing Required Field"
+						"RESP_MSG": "Missing Required Field"
 					});
                 } else {
                     POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
@@ -724,7 +743,7 @@ app.post('/redeem_mpoint', function(req, res) {
                     console.log('Field Error PR');
                     res.json({
 						"RESP_CDE": 401,
-						"message": "Missing Required Field"
+						"RESP_MSG": "Missing Required Field"
 					});
                 } else {
                     POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
@@ -749,6 +768,7 @@ app.post('/redeem_mpoint', function(req, res) {
 
             if (current_point_result.length <= 0) {
                 //302 - no mcard
+				console.log('Not found Partner ID/Partner NBR');
                 res.json({
                     "RESP_SYSCDE": "",
                     "RESP_DATETIME": date_str,
@@ -1067,7 +1087,7 @@ app.post('/membercard', function(req, res) {
         res.status(401);
         res.json({
 			"RESP_CDE": 401,
-			"message": "Missing Required Field"
+			"RESP_MSG": "Missing Required Field"
 		});
         /*res.json({
             "RESP_SYSCDE": "",

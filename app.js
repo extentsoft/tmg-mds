@@ -94,13 +94,15 @@ app.get('/test3', function(req, res) {
 app.get('/test4', function(req, res) {
     var stmt = "select * from MBRFLIB/MCRR1P where MBCODE = '7109000900003026'";
 	var today = new Date();
+	var date_str = '';
+	date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth()+1) < 10 ? '0' : '').toString() + (today.getUTCMonth()+1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
     pool.query(stmt)
         .then(function(result) {
             //console.log(result[0].HLDNAM);
             console.log(result.length);
             console.log(result);
             //res.json(result);
-			res.json(today);
+			res.json(date_str);
         })
         .fail(function(error) {
             console.log(error);
@@ -213,6 +215,9 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
     var cntry = '';
     var custid = '';
     var trigger = 1;
+	var date_str = '';
+	var today = new Date();
+	date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth()+1) < 10 ? '0' : '').toString() + (today.getUTCMonth()+1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
     if (req.body.CUST_COUNTRYCODE == '') {
         trigger = 0;
     } else {
@@ -284,7 +289,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
                 //101 - success
                 res.json({
                     "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
+                    "RESP_DATETIME": date_str,
                     "RESP_CDE": 102,
                     "MCARD_NUM": result[0].MBCODE,
                     "CARD_TYPE": result[0].MBMEMC,
@@ -304,6 +309,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
                         "PARTNER_DETAILS": result[0].PNDETAIL,
                         "PARTNER_STATUS": "ACTIVE",
                         "PARTNER_DATE": result[0].CLADTE
+						//"PARTNER_DATE": date_str
                     }],
                     "RECORDCTRL": {
                         "SEQNO": 1,
@@ -332,12 +338,13 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
                         "PARTNER_DETAILS": result[i].PNDETAIL,
                         "PARTNER_STATUS": "ACTIVE",
                         "PARTNER_DATE": result[i].CLADTE
+						//"PARTNER_DATE": date_str
                     });
                 }
 
                 res.json({
-                    "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
+                    "RESP_SYSCDE": 101,
+                    "RESP_DATETIME": date_str,
                     "RESP_CDE": 101,
                     "MCARD_NUM": result[0].MBCODE,
                     "CARD_TYPE": result[0].MBMEMC,
@@ -361,7 +368,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
                 //301 - no partner card
                 res.json({
                     "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
+                    "RESP_DATETIME": date_str,
                     "RESP_CDE": 301,
                     "MCARD_NUM": "",
                     "CARD_TYPE": "",
@@ -389,6 +396,8 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
 });
 
 app.post('/redeem_mpoint', function(req, res) {
+	var today = new Date();
+	date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth()+1) < 10 ? '0' : '').toString() + (today.getUTCMonth()+1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
     /*req.body.PARTNER_ID
     req.body.PARTNER_NBR = '4548529000000039'
     req.body.POINTBURN_TYPE = 'DP
@@ -443,7 +452,7 @@ app.post('/redeem_mpoint', function(req, res) {
             if (parseInt(current_point_result[0].MBPOINT) < cal_POINTBURN) {
                 res.json({
                     "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
+                    "RESP_DATETIME": date_str,
                     "RESP_CDE": 201,
                     "MCARD_NUM": current_point_result[0].MBCODE,
                     "CARD_TYPE": current_point_result[0].MBMEMC,
@@ -453,6 +462,7 @@ app.post('/redeem_mpoint', function(req, res) {
                     "CARD_POINT_EXP_DATE": current_point_result[0].MBDATT,
                     "POINTBURN_MPOINT_SUCCESS": "0"
                 });
+				return;
             }
 
             // Now, MBPOINT (net point) is sufficient
@@ -461,7 +471,7 @@ app.post('/redeem_mpoint', function(req, res) {
                 //302 - no mcard
                 res.json({
                     "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
+                    "RESP_DATETIME": date_str,
                     "RESP_CDE": 302,
                     "MCARD_NUM": "",
                     "CARD_TYPE": "",
@@ -524,7 +534,7 @@ app.post('/redeem_mpoint', function(req, res) {
 
                                 res.json({
                                     "RESP_SYSCDE": "",
-                                    "RESP_DATETIME": "",
+                                    "RESP_DATETIME": date_str,
                                     "RESP_CDE": 101,
                                     "MCARD_NUM": current_point_result[0].MBCODE,
                                     "CARD_TYPE": current_point_result[0].MBMEMC,
@@ -541,7 +551,7 @@ app.post('/redeem_mpoint', function(req, res) {
                                 res.status(500);
                                 res.json({
                                     "RESP_SYSCDE": "",
-                                    "RESP_DATETIME": "",
+                                    "RESP_DATETIME": date_str,
                                     "RESP_CDE": 500,
                                     "MCARD_NUM": "",
                                     "CARD_TYPE": "",
@@ -557,7 +567,7 @@ app.post('/redeem_mpoint', function(req, res) {
                         res.status(500);
                         res.json({
                             "RESP_SYSCDE": "",
-                            "RESP_DATETIME": "",
+                            "RESP_DATETIME": date_str,
                             "RESP_CDE": 500,
                             "MCARD_NUM": "",
                             "CARD_TYPE": "",
@@ -574,7 +584,7 @@ app.post('/redeem_mpoint', function(req, res) {
                 // หากพบหลาย MCARD_NUM ให้เลือก อันที่สมัครล่าสุด โดยดูจาก MBDAT และ CARD_EXPIRY_DATE ยังไม่หมดอายุ
                 res.json({
                     "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
+                    "RESP_DATETIME": date_str,
                     "RESP_CDE": 102,
                     "MCARD_NUM": current_point_result[0].MBCODE,
                     "CARD_TYPE": current_point_result[0].MBMEMC,
@@ -588,7 +598,7 @@ app.post('/redeem_mpoint', function(req, res) {
                 //301 - no partner card
                 res.json({
                     "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
+                    "RESP_DATETIME": date_str,
                     "RESP_CDE": 301,
                     "MCARD_NUM": "",
                     "CARD_TYPE": "",
@@ -604,7 +614,7 @@ app.post('/redeem_mpoint', function(req, res) {
             res.status(500);
             res.json({
                 "RESP_SYSCDE": "",
-                "RESP_DATETIME": "",
+                "RESP_DATETIME": date_str,
                 "RESP_CDE": 500,
                 "MCARD_NUM": "",
                 "CARD_TYPE": "",

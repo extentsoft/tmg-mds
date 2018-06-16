@@ -3,15 +3,33 @@
 /**
  * Module dependencies.
  */
+'use strict'
+const logger = require('winston');
+const processType = process.env.PROCESS_TYPE;
+logger.info(`Starting ${processType} process`, { pid: process.pid });
 
-var app = require('../app');
-var debug = require('debug')('tmg-cobrand:server');
+var app,debug;
 var http = require('http');
+
+if (processType === 'cobrand-inquiry') {
+  //app = require('../services/cobrand/inquiry/app.js');
+  app = require('../services/cobrand/inquiry');
+  debug = require('debug')('cobrand-inquiry:server');
+} else if (processType === 'cobrand-inquiry-id') {
+  app = require('../services/cobrand/inquiry_id');
+  debug = require('debug')('cobrand-inquiry-id:server');
+} else if (processType === 'cobrand-inquiry-passport') {
+  app = require('../services/cobrand/inquiry_passport');
+  debug = require('debug')('cobrand-inquiry-passport:server');
+} else {
+  throw new Error(`${processType} is an unsupported process`)
+} 
+
+
 
 /**
  * Get port from environment and store in Express.
  */
-
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 

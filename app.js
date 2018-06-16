@@ -131,6 +131,7 @@ app.post('/inquiry_mpoint', function(req, res) {
     var today = new Date();
     date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth() + 1) < 10 ? '0' : '').toString() + (today.getUTCMonth() + 1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
 
+
     if ((typeof req.body.PARTNER_ID == 'undefined') || (typeof req.body.PARTNER_NBR == 'undefined')) {
         res.status(400);
         res.end();

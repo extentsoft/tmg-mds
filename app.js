@@ -118,7 +118,8 @@ app.post('/inquiry_mpoint', function(req, res) {
 
   if ( (typeof req.body.PARTNER_ID == 'undefined') || (typeof req.body.PARTNER_NBR == 'undefined')) {
     res.status(400);
-    res.json({
+	res.end();
+    /*res.json({
         "RESP_SYSCDE": "",
         "RESP_DATETIME": date_str,
         "RESP_CDE": 400,
@@ -129,105 +130,165 @@ app.post('/inquiry_mpoint', function(req, res) {
         "CARD_POINT_EXPIRY": "",
         "CARD_POINT_EXP_DATE": "",
         "POINTBURN_MPOINT_SUCCESS": "0"
-    });
+    });*/
   }
-
-    var stmt = "select MVM01P.MBCODE,MVM01P.MBMEMC,MVM01P.MBEXP,";
-    stmt += " MCRS2P.MBPOINT,MCRS2P.MBCEXP,MCRS2P.MBDATT,";
-    stmt += " MVM01P.MBTTLE,MVM01P.MBTNAM,MVM01P.MBTSUR,";
-    stmt += " MVM01P.MBETLE,MVM01P.MBENAM,MVM01P.MBESUR ";
-    stmt += " from MBRFLIB/MVM01P MVM01P";
-    stmt += " inner join MBRFLIB/PM200MP PM200MP on MVM01P.MBCODE = PM200MP.MBCODE";
-    stmt += " inner join MBRFLIB/MCRS2P MCRS2P on MVM01P.MBCODE = MCRS2P.MBCODE";
-    stmt += " where PM200MP.PNID = '" + req.body.PARTNER_ID + "' and PM200MP.PNNUM = '" + req.body.PARTNER_NBR + "'";
-
-    console.log(stmt);
-    pool.query(stmt)
+	var stmt_ = "SELECT PM200MP.PNID,PM200MP.PNNUM FROM MBRFLIB/PM200MP PM200MP inner join MBRFLIB/MVM01P MVM01P on PM200MP.MBCODE = MVM01P.MBCODE where PM200MP.PNNUM = '" + req.body.PARTNER_NBR + "'";
+	var count_partner = 0;
+    console.log(stmt_);
+    pool.query(stmt_)
         .then(function(result) {
             console.log(result.length);
-            console.log(result);
+			console.log(result);
+			count_partner = result.length;
+			var stmt = "select MVM01P.MBCODE,MVM01P.MBMEMC,MVM01P.MBEXP,";
+			stmt += " MCRS2P.MBPOINT,MCRS2P.MBCEXP,MCRS2P.MBDATT,";
+			stmt += " MVM01P.MBTTLE,MVM01P.MBTNAM,MVM01P.MBTSUR,";
+			stmt += " MVM01P.MBETLE,MVM01P.MBENAM,MVM01P.MBESUR ";
+			stmt += " from MBRFLIB/MVM01P MVM01P";
+			stmt += " inner join MBRFLIB/PM200MP PM200MP on MVM01P.MBCODE = PM200MP.MBCODE";
+			stmt += " inner join MBRFLIB/MCRS2P MCRS2P on MVM01P.MBCODE = MCRS2P.MBCODE";
+			stmt += " where PM200MP.PNID = '" + req.body.PARTNER_ID + "' and PM200MP.PNNUM = '" + req.body.PARTNER_NBR + "'";
+			
+			/*var stmt = "IF(SELECT COUNT(*) FROM MBRFLIB/PM200MP PM200MP where PM200MP.PNID = '" + req.body.PARTNER_ID + "') > 0 THEN";
+			stmt += " select MVM01P.MBCODE,MVM01P.MBMEMC,MVM01P.MBEXP,";
+			stmt += " MCRS2P.MBPOINT,MCRS2P.MBCEXP,MCRS2P.MBDATT,";
+			stmt += " MVM01P.MBTTLE,MVM01P.MBTNAM,MVM01P.MBTSUR,";
+			stmt += " MVM01P.MBETLE,MVM01P.MBENAM,MVM01P.MBESUR ";
+			stmt += " from MBRFLIB/MVM01P MVM01P";
+			stmt += " inner join MBRFLIB/PM200MP PM200MP on MVM01P.MBCODE = PM200MP.MBCODE";
+			stmt += " inner join MBRFLIB/MCRS2P MCRS2P on MVM01P.MBCODE = MCRS2P.MBCODE";
+			stmt += " where PM200MP.PNID = '" + req.body.PARTNER_ID + "' and PM200MP.PNNUM = '" + req.body.PARTNER_NBR + "';";
+			stmt += " ELSE SELECT 999; END IF";*/
 
-            if (result.length <= 0) {
-                //302 - no mcard
-                res.json({
-                    "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
-                    "RESP_CDE": 302,
-                    "MCARD_NUM": "",
-                    "CARD_TYPE": 0,
-                    "CARD_EXPIRY_DATE": "",
-                    "CARD_POINT_BALANCE": "",
-                    "CARD_POINT_EXPIRY": "",
-                    "CARD_POINT_EXP_DATE": "",
-                    "DEMO_TH_TITLE": "",
-                    "DEMO_TH_NAME": "",
-                    "DEMO_TH_SURNAME": "",
-                    "DEMO_EN_TITLE": "",
-                    "DEMO_EN_NAME": "",
-                    "DEMO_EN_SURNAME": ""
-                });
-            } else if (result.length == 1) {
-                //101 - success
-                res.json({
-                    "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
-                    "RESP_CDE": 101,
-                    "MCARD_NUM": result[0].MBCODE,
-                    "CARD_TYPE": result[0].MBMEMC,
-                    "CARD_EXPIRY_DATE": result[0].MBEXP,
-                    "CARD_POINT_BALANCE": result[0].MBPOINT,
-                    "CARD_POINT_EXPIRY": result[0].MBCEXP,
-                    "CARD_POINT_EXP_DATE": result[0].MBDATT,
-                    "DEMO_TH_TITLE": result[0].MBTTLE,
-                    "DEMO_TH_NAME": result[0].MBTNAM,
-                    "DEMO_TH_SURNAME": result[0].MBTSUR,
-                    "DEMO_EN_TITLE": result[0].MBETLE,
-                    "DEMO_EN_NAME": result[0].MBENAM,
-                    "DEMO_EN_SURNAME": result[0].MBESUR
-                });
-            } else if (result.length > 1) {
-                //102 - more than 1 card
-                res.json({
-                    "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
-                    "RESP_CDE": 101,
-                    "MCARD_NUM": result[0].MBCODE,
-                    "CARD_TYPE": result[0].MBMEMC,
-                    "CARD_EXPIRY_DATE": result[0].MBEXP,
-                    "CARD_POINT_BALANCE": result[0].MBPOINT,
-                    "CARD_POINT_EXPIRY": result[0].MBCEXP,
-                    "CARD_POINT_EXP_DATE": result[0].MBDATT,
-                    "DEMO_TH_TITLE": result[0].MBTTLE,
-                    "DEMO_TH_NAME": result[0].MBTNAM,
-                    "DEMO_TH_SURNAME": result[0].MBTSUR,
-                    "DEMO_EN_TITLE": result[0].MBETLE,
-                    "DEMO_EN_NAME": result[0].MBENAM,
-                    "DEMO_EN_SURNAME": result[0].MBESUR
-                });
-            } else {
-                //301 - no partner card
-                res.json({
-                    "RESP_SYSCDE": "",
-                    "RESP_DATETIME": "",
-                    "RESP_CDE": 301,
-                    "MCARD_NUM": "",
-                    "CARD_TYPE": 0,
-                    "CARD_EXPIRY_DATE": "",
-                    "CARD_POINT_BALANCE": "",
-                    "CARD_POINT_EXPIRY": "",
-                    "CARD_POINT_EXP_DATE": "",
-                    "DEMO_TH_TITLE": "",
-                    "DEMO_TH_NAME": "",
-                    "DEMO_TH_SURNAME": "",
-                    "DEMO_EN_TITLE": "",
-                    "DEMO_EN_NAME": "",
-                    "DEMO_EN_SURNAME": ""
-                });
-            }
+			console.log(stmt);
+			pool.query(stmt)
+				.then(function(result) {
+					console.log(result.length);
+					console.log(result);
+					
+					if (count_partner <= 0) {
+						//302 - no mcard
+						res.status(404);
+						res.json({
+							"RESP_SYSCDE": "",
+							"RESP_DATETIME": "",
+							"RESP_CDE": 302,
+							"MCARD_NUM": "",
+							"CARD_TYPE": 0,
+							"CARD_EXPIRY_DATE": "",
+							"CARD_POINT_BALANCE": "",
+							"CARD_POINT_EXPIRY": "",
+							"CARD_POINT_EXP_DATE": "",
+							"DEMO_TH_TITLE": "",
+							"DEMO_TH_NAME": "",
+							"DEMO_TH_SURNAME": "",
+							"DEMO_EN_TITLE": "",
+							"DEMO_EN_NAME": "",
+							"DEMO_EN_SURNAME": ""
+						});
+					} else if (result.length <= 0 && count_partner >0) {
+						//302 - no mcard
+						res.status(404);
+						res.json({
+							"RESP_SYSCDE": "",
+							"RESP_DATETIME": "",
+							"RESP_CDE": 301,
+							"MCARD_NUM": "",
+							"CARD_TYPE": 0,
+							"CARD_EXPIRY_DATE": "",
+							"CARD_POINT_BALANCE": "",
+							"CARD_POINT_EXPIRY": "",
+							"CARD_POINT_EXP_DATE": "",
+							"DEMO_TH_TITLE": "",
+							"DEMO_TH_NAME": "",
+							"DEMO_TH_SURNAME": "",
+							"DEMO_EN_TITLE": "",
+							"DEMO_EN_NAME": "",
+							"DEMO_EN_SURNAME": ""
+						});
+					} else if (result.length == 1) {
+						//101 - success
+						res.json({
+							"RESP_SYSCDE": "",
+							"RESP_DATETIME": "",
+							"RESP_CDE": 101,
+							"MCARD_NUM": result[0].MBCODE,
+							"CARD_TYPE": result[0].MBMEMC,
+							"CARD_EXPIRY_DATE": result[0].MBEXP,
+							"CARD_POINT_BALANCE": result[0].MBPOINT,
+							"CARD_POINT_EXPIRY": result[0].MBCEXP,
+							"CARD_POINT_EXP_DATE": result[0].MBDATT,
+							"DEMO_TH_TITLE": result[0].MBTTLE,
+							"DEMO_TH_NAME": result[0].MBTNAM,
+							"DEMO_TH_SURNAME": result[0].MBTSUR,
+							"DEMO_EN_TITLE": result[0].MBETLE,
+							"DEMO_EN_NAME": result[0].MBENAM,
+							"DEMO_EN_SURNAME": result[0].MBESUR
+						});
+					} else if (result.length > 1) {
+						//102 - more than 1 card
+						res.json({
+							"RESP_SYSCDE": "",
+							"RESP_DATETIME": "",
+							"RESP_CDE": 102,
+							"MCARD_NUM": result[0].MBCODE,
+							"CARD_TYPE": result[0].MBMEMC,
+							"CARD_EXPIRY_DATE": result[0].MBEXP,
+							"CARD_POINT_BALANCE": result[0].MBPOINT,
+							"CARD_POINT_EXPIRY": result[0].MBCEXP,
+							"CARD_POINT_EXP_DATE": result[0].MBDATT,
+							"DEMO_TH_TITLE": result[0].MBTTLE,
+							"DEMO_TH_NAME": result[0].MBTNAM,
+							"DEMO_TH_SURNAME": result[0].MBTSUR,
+							"DEMO_EN_TITLE": result[0].MBETLE,
+							"DEMO_EN_NAME": result[0].MBENAM,
+							"DEMO_EN_SURNAME": result[0].MBESUR
+						});
+					} else {
+						//301 - no partner card
+						res.status(404);
+						res.json({
+							"RESP_SYSCDE": "",
+							"RESP_DATETIME": "",
+							"RESP_CDE": 301,
+							"MCARD_NUM": "",
+							"CARD_TYPE": 0,
+							"CARD_EXPIRY_DATE": "",
+							"CARD_POINT_BALANCE": "",
+							"CARD_POINT_EXPIRY": "",
+							"CARD_POINT_EXP_DATE": "",
+							"DEMO_TH_TITLE": "",
+							"DEMO_TH_NAME": "",
+							"DEMO_TH_SURNAME": "",
+							"DEMO_EN_TITLE": "",
+							"DEMO_EN_NAME": "",
+							"DEMO_EN_SURNAME": ""
+						});
+					}
+				})
+				.fail(function(error) {
+					console.log(error);
+					res.status(422);
+					res.end();
+					/*res.json({
+						"RESP_SYSCDE": "",
+						"RESP_DATETIME": date_str,
+						"RESP_CDE": 400,
+						"MCARD_NUM": "",
+						"CARD_TYPE": "",
+						"CARD_EXPIRY_DATE": "",
+						"CARD_POINT_BALANCE": "",
+						"CARD_POINT_EXPIRY": "",
+						"CARD_POINT_EXP_DATE": "",
+						"POINTBURN_MPOINT_SUCCESS": "0"
+					});*/
+				});
         })
         .fail(function(error) {
             console.log(error);
-        });
+            });
+
+    
 });
 //cz
 app.post('/inquiry_mpoint_byid', function(req, res) {
@@ -247,7 +308,17 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
         "CARD_POINT_BALANCE": "",
         "CARD_POINT_EXPIRY": "",
         "CARD_POINT_EXP_DATE": "",
-        "POINTBURN_MPOINT_SUCCESS": "0"
+        "DEMO_TH_TITLE": "",
+        "DEMO_TH_NAME": "",
+        "DEMO_TH_SURNAME": "",
+        "DEMO_EN_TITLE": "",
+        "DEMO_EN_NAME": "",
+        "DEMO_EN_SURNAME": "",
+        "CARDS": [],
+        "RECORDCTRL": {
+            "SEQNO": 0,
+            "CARD_COUNT": 0
+        }
     });
   }
     var cntry = '';
@@ -298,6 +369,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
 
             if (result.length <= 0) {
                 //302 - no mcard
+                res.status(404);
                 res.json({
                     "RESP_SYSCDE": "",
                     "RESP_DATETIME": "",
@@ -401,6 +473,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
                 });
             } else {
                 //301 - no partner card
+                res.status(404);
                 res.json({
                     "RESP_SYSCDE": "",
                     "RESP_DATETIME": date_str,
@@ -427,6 +500,29 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
         })
         .fail(function(error) {
             console.log(error);
+            res.status(422);
+            res.json({
+                "RESP_SYSCDE": "",
+                "RESP_DATETIME": "",
+                "RESP_CDE": 422,
+                "MCARD_NUM": "",
+                "CARD_TYPE": "",
+                "CARD_EXPIRY_DATE": "",
+                "CARD_POINT_BALANCE": "",
+                "CARD_POINT_EXPIRY": "",
+                "CARD_POINT_EXP_DATE": "",
+                "DEMO_TH_TITLE": "",
+                "DEMO_TH_NAME": "",
+                "DEMO_TH_SURNAME": "",
+                "DEMO_EN_TITLE": "",
+                "DEMO_EN_NAME": "",
+                "DEMO_EN_SURNAME": "",
+                "CARDS": [],
+                "RECORDCTRL": {
+                    "SEQNO": 0,
+                    "CARD_COUNT": 0
+                }
+            });
         });
 });
 

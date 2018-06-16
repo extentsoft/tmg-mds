@@ -109,6 +109,35 @@ app.get('/test4', function(req, res) {
         });
 
 });
+
+app.get('/test5', function(req, res) {
+    var stmt = "select * from(select ROW_NUMBER() OVER(ORDER BY MVM01P.MBCODE) AS ROWNUM, MVM01P.MBCODE, MVM01P.MBMEMC, MVM01P.MBEXP, \
+        MCRS2P.MBPOINT, MCRS2P.MBCEXP, MCRS2P.MBDATT, \
+        MVM01P.MBTTLE, MVM01P.MBTNAM, MVM01P.MBTSUR, \
+        MVM01P.MBETLE, MVM01P.MBENAM, MVM01P.MBESUR, \
+        PM110MP.PNPROD, PM110MP.PNNUM, PM110MP.PNDETAIL, PM110MP.CLADTE \
+		from MBRFLIB / PM200MP PM200MP \
+		inner join MBRFLIB / MVM01P MVM01P on PM200MP.MBCODE = MVM01P.MBCODE \
+		inner join MBRFLIB / MCRS2P MCRS2P on PM200MP.MBCODE = MCRS2P.MBCODE \
+		inner join MBRFLIB / PM110MP PM110MP on PM200MP.PNID = PM110MP.PNID \
+		and PM200MP.PNNUM = PM110MP.PNNUM where PM200MP.MBID = '" + req.body.CUST_ID + "' \
+        as tbl";
+	var today = new Date();
+	var date_str = '';
+	date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth()+1) < 10 ? '0' : '').toString() + (today.getUTCMonth()+1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
+    pool.query(stmt)
+        .then(function(result) {
+            //console.log(result[0].HLDNAM);
+            console.log(result.length);
+            console.log(result);
+            //res.json(result);
+			res.json(date_str);
+        })
+        .fail(function(error) {
+            console.log(error);
+        });
+
+});
 /*
 app.head('/partner/:PARTNER_NBR', function(req,res){
   var stmt = "select PM200MP.PNNUM";

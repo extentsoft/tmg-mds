@@ -109,7 +109,22 @@ app.get('/test4', function(req, res) {
         });
 
 });
+/*
+app.head('/partner/:PARTNER_NBR', function(req,res){
+  var stmt = "select PM200MP.PNNUM";
+  stmt += " from MBRFLIB/PM200MP PM200MP";
+  stmt += " where PM200MP.PNNUM = '" + req.params.PARTNER_NBR + "'";
 
+  if()
+  pool.query(stmt)
+      .then(function(result) {
+        if (result.length <= 0) res.status(404).end();
+        else res.status(200).end();
+      })
+      .fail(function(err){
+        res.status(422).end();
+      });
+});*/
 
 app.post('/inquiry_mpoint', function(req, res) {
   var date_str = '';
@@ -296,9 +311,9 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
   var today = new Date();
   date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth()+1) < 10 ? '0' : '').toString() + (today.getUTCMonth()+1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
 
-  if ( (typeof req.body.CUST_COUNTRYCODE == 'undefined') || (typeof req.body.CUST_ID == 'undefined')) {
+  if ( (typeof req.body.CUST_COUNTRYCODE == 'undefined') || (typeof req.body.CUST_ID == 'undefined') || (typeof req.body.PARTNER_ID == 'undefined') || (typeof req.body.SELRANGEDT == 'undefined') || (typeof req.body.SELRANGEDT.START == 'undefined') || (typeof req.body.SELRANGEDT.LIMIT == 'undefined')) {
     res.status(400);
-    res.json({
+    /*res.json({
         "RESP_SYSCDE": "",
         "RESP_DATETIME": date_str,
         "RESP_CDE": 400,
@@ -319,7 +334,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
             "SEQNO": 0,
             "CARD_COUNT": 0
         }
-    });
+    });*/
   }
     var cntry = '';
     var custid = '';
@@ -346,7 +361,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
         //2
         stmt += " inner join (select * from MBRFLIB/PM110MP PM110MP inner join MBRFLIB/CM100MP CM100MP on CM100MP.CNTRYCD3 = PM110MP.CNTRYCD3) as PM110CM100 on PM200MP.PNID = PM110CM100.PNID and PM200MP.PNNUM = PM110CM100.PNNUM";
 
-        stmt += " where PM110CM100.CNTRYCD2='" + cntry + "' AND PM200MP.MBID = (select concat(CM1.CNTRYCD3,'" + req.body.CUST_ID + "') from MBRFLIB/CM100MP CM1 where CM1.CNTRYCD2 = '" + cntry + "') ) as tbl" ;
+        stmt += " where PM200MP.PNID = '" + req.body.PARTNER_ID + "' and PM110CM100.CNTRYCD2='" + cntry + "' AND PM200MP.MBID = (select concat(CM1.CNTRYCD3,'" + req.body.CUST_ID + "') from MBRFLIB/CM100MP CM1 where CM1.CNTRYCD2 = '" + cntry + "') ) as tbl" ;
     } else {
         var stmt = "select * from (select ROW_NUMBER() OVER (ORDER BY  MVM01P.MBCODE) AS ROWNUM, MVM01P.MBCODE,MVM01P.MBMEMC,MVM01P.MBEXP,";
         stmt += " MCRS2P.MBPOINT,MCRS2P.MBCEXP,MCRS2P.MBDATT,";
@@ -358,7 +373,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
         stmt += " inner join MBRFLIB/MCRS2P MCRS2P on PM200MP.MBCODE = MCRS2P.MBCODE";
         stmt += " inner join MBRFLIB/PM110MP PM110MP on PM200MP.PNID = PM110MP.PNID and PM200MP.PNNUM = PM110MP.PNNUM";
         //stmt += " where PM200MP.MBID = '" + req.body.cust_id + "' OFFSET  " + req.body.selrangedt.start + " ROWS FETCH FIRST " + req.body.selrangedt.limit + " ROWS";
-        stmt += " where PM200MP.MBID = '" + req.body.CUST_ID + "') as tbl";
+        stmt += " where PM200MP.PNID = '" + req.body.PARTNER_ID + "' and PM200MP.MBID = '" + req.body.CUST_ID + "') as tbl";
     }
 
     console.log(stmt);
@@ -368,12 +383,12 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
             console.log(result);
 
             if (result.length <= 0) {
-                //302 - no mcard
+                //301
                 res.status(404);
                 res.json({
                     "RESP_SYSCDE": "",
                     "RESP_DATETIME": "",
-                    "RESP_CDE": 302,
+                    "RESP_CDE": 301,
                     "MCARD_NUM": "",
                     "CARD_TYPE": "",
                     "CARD_EXPIRY_DATE": "",
@@ -501,7 +516,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
         .fail(function(error) {
             console.log(error);
             res.status(422);
-            res.json({
+            /*res.json({
                 "RESP_SYSCDE": "",
                 "RESP_DATETIME": "",
                 "RESP_CDE": 422,
@@ -522,7 +537,7 @@ app.post('/inquiry_mpoint_byid', function(req, res) {
                     "SEQNO": 0,
                     "CARD_COUNT": 0
                 }
-            });
+            });*/
         });
 });
 
@@ -558,11 +573,19 @@ app.post('/redeem_mpoint', function(req, res) {
     req.body.POINTBURN_MILE
     req.body.POINTBURN_AIRLINECODE*/
 
+    if ( (typeof req.body.PARTNER_ID == 'undefined') || (typeof req.body.PARTNER_NBR == 'undefined') || (typeof req.body.POINTBURN_TYPE == 'undefined') ) {
+      res.status(400);
+      res.end();
+
+    }
+
+
+
     var current_point_stmt = "select MVM01P.MBCODE,MVM01P.MBEXP,MVM01P.MBMEMC,MCRS2P.MBPOINC, MCRS2P.MBPOINR, MCRS2P.MBPOINT, MCRS2P.MBCEXP, MCRS2P.MBDATT";
     current_point_stmt += " from MBRFLIB/MVM01P MVM01P";
     current_point_stmt += " inner join MBRFLIB/PM200MP PM200MP on MVM01P.MBCODE = PM200MP.MBCODE";
     current_point_stmt += " inner join MBRFLIB/MCRS2P MCRS2P on MVM01P.MBCODE = MCRS2P.MBCODE";
-    current_point_stmt += " where PM200MP.PNID = '10200' and PM200MP.PNNUM ='" + req.body.PARTNER_NBR + "'";
+    current_point_stmt += " where PM200MP.PNID = '" + req.body.PARTNER_ID + "' and PM200MP.PNNUM ='" + req.body.PARTNER_NBR + "'";
     pool.query(current_point_stmt)
         .then(function(current_point_result) {
             console.log(current_point_result);
@@ -570,40 +593,103 @@ app.post('/redeem_mpoint', function(req, res) {
             //MCRS2P
             var cal_POINTBURN = 0;
             if (req.body.POINTBURN_TYPE == "DP") {
+              if ( (typeof req.body.POINTBURN_FLAG == 'undefined')
+                  || (typeof req.body.POINTBURN_BRANCH == 'undefined')
+                  || (typeof req.body.POINTBURN_DEPT == 'undefined')
+                  || (typeof req.body.POINTBURN_PROMO_NAME == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_CODE == 'undefined')
+                  || (typeof req.body.POINTBURN_PROMO_NUM == 'undefined')
+                  || (typeof req.body.POINTBURN_EDC_SHOP_NAME == 'undefined')
+                  || (typeof req.body.POINTBURN_EDC_REFERENCE_NUM == 'undefined')
+                  || (typeof req.body.POINTBURN_APPV_NUM == 'undefined')
+                  || (typeof req.body.POINTBURN_EDC_RATE == 'undefined')
+                  || (typeof req.body.POINTBURN_EDC_SALE_AMOUNT == 'undefined')
+                  || (typeof req.body.POINTBURN_EDC_DISCOUNT_AMT == 'undefined')
+                  || (typeof req.body.POINTBURN_EDC_TERMINAL == 'undefined')
+                  || (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+                res.status(400);
+                res.end();
+              }
+
                 cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT);
-            } else if (req.body.POINTBURN_TYPE == "MI") {
+            }
+            else if (req.body.POINTBURN_TYPE == "MI") {
+              if ( (typeof req.body.POINTBURN_FLAG == 'undefined')
+                  || (typeof req.body.POINTBURN_BRANCH == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_CODE == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_NAME == 'undefined')
+                  || (typeof req.body.POINTBURN_MILE == 'undefined')
+                  || (typeof req.body.POINTBURN_AIRLINECODE == 'undefined')
+                  || (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+                res.status(400);
+                res.end();
+              }
+
                 cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT) * parseInt(req.body.POINTBURN_MILE);
-            } else if (req.body.POINTBURN_TYPE == "PR" || req.body.POINTBURN_TYPE == "SR" || req.body.POINTBURN_TYPE == "CC") {
+            }
+            else if (req.body.POINTBURN_TYPE == "CC") {
+              if ( (typeof req.body.POINTBURN_FLAG == 'undefined')
+                  || (typeof req.body.POINTBURN_BRANCH == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_CODE == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_NAME == 'undefined')
+                  || (typeof req.body.POINTBURN_PIECE == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_AMT == 'undefined')
+                  || (typeof req.body.POINTBURN_MPOINT == 'undefined') ) {
+                res.status(400);
+                res.end();
+              }
                 cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT) * parseInt(req.body.POINTBURN_PIECE);
             }
+            else if (req.body.POINTBURN_TYPE == "SP") {
+              if ( (typeof req.body.POINTBURN_FLAG == 'undefined')
+                  || (typeof req.body.POINTBURN_BRANCH == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_CODE == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_NAME == 'undefined')
+                  || (typeof req.body.POINTBURN_VENDER == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_ADD_AMT == 'undefined')
+                  || (typeof req.body.POINTBURN_PIECE == 'undefined')
+                  || (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+                res.status(400);
+                res.end();
+              }
+                cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT) * parseInt(req.body.POINTBURN_PIECE);
+            }
+			
+            else if (req.body.POINTBURN_TYPE == "PR" ) {
+              if ( (typeof req.body.POINTBURN_FLAG == 'undefined')
+                  || (typeof req.body.POINTBURN_BRANCH == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_CODE == 'undefined')
+                  || (typeof req.body.POINTBURN_ITEM_NAME == 'undefined')
+                  || (typeof req.body.POINTBURN_PIECE == 'undefined')
+                  || (typeof req.body.POINTBURN_VENDER == 'undefined')
+                  || (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+                res.status(400);
+                res.end();
+              }
+                cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT) * parseInt(req.body.POINTBURN_PIECE);
+            }
+            else{
+              res.status(422);
+              res.end();
+            }
+
+
+
+
             var cal_MPOINR = parseInt(current_point_result[0].MBPOINR) + cal_POINTBURN;
             var cal_MBPOINT = parseInt(current_point_result[0].MBPOINC) - cal_MPOINR;
 
 
-            if (parseInt(current_point_result[0].MBPOINT) < cal_POINTBURN) {
-                res.json({
-                    "RESP_SYSCDE": "",
-                    "RESP_DATETIME": date_str,
-                    "RESP_CDE": 201,
-                    "MCARD_NUM": current_point_result[0].MBCODE,
-                    "CARD_TYPE": current_point_result[0].MBMEMC,
-                    "CARD_EXPIRY_DATE": current_point_result[0].MBEXP,
-                    "CARD_POINT_BALANCE": current_point_result[0].MBPOINT,
-                    "CARD_POINT_EXPIRY": current_point_result[0].MBCEXP,
-                    "CARD_POINT_EXP_DATE": current_point_result[0].MBDATT,
-                    "POINTBURN_MPOINT_SUCCESS": "0"
-                });
-				return;
-            }
+            
 
             // Now, MBPOINT (net point) is sufficient
 
             if (current_point_result.length <= 0) {
-                //302 - no mcard
+                //301
                 res.json({
                     "RESP_SYSCDE": "",
                     "RESP_DATETIME": date_str,
-                    "RESP_CDE": 302,
+                    "RESP_CDE": 301,
                     "MCARD_NUM": "",
                     "CARD_TYPE": "",
                     "CARD_EXPIRY_DATE": "",
@@ -624,91 +710,111 @@ app.post('/redeem_mpoint', function(req, res) {
                     current_point_result[0].MBCODE
                 ];
 
+				if (parseInt(current_point_result[0].MBPOINT) < cal_POINTBURN) {
+					res.json({
+						"RESP_SYSCDE": "",
+						"RESP_DATETIME": date_str,
+						"RESP_CDE": 201,
+						"MCARD_NUM": current_point_result[0].MBCODE,
+						"CARD_TYPE": current_point_result[0].MBMEMC,
+						"CARD_EXPIRY_DATE": current_point_result[0].MBEXP,
+						"CARD_POINT_BALANCE": current_point_result[0].MBPOINT,
+						"CARD_POINT_EXPIRY": current_point_result[0].MBCEXP,
+						"CARD_POINT_EXP_DATE": current_point_result[0].MBDATT,
+						"POINTBURN_MPOINT_SUCCESS": "0"
+					});
+					return;
+				}
+				else{
+					var point_log_stmt = "insert into MBRFLIB/MCRR1P";
+					point_log_stmt += "(MBAPP,MBCODE,MBBRH,MBDAT,MBRDC,MBTYR,MBRECN,MBRUN,MBPOINT,MBPIE,MBFLG,MBMILE,MBPOIND,MBAMTDP,MBAMA,MBAPVO,MBREFT,TERMINAL3,MBSAMT,MBRATE)";
+					point_log_stmt += " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+					var point_log_params = [
+						(current_point_result[0].MBCODE).substring(15, (current_point_result[0].MBCODE).length),
+						current_point_result[0].MBCODE,
+						parseInt(req.body.POINTBURN_BRANCH), //POINTBURN_BRANCH --> MBBRH
+						0,
+						req.body.POINTBURN_ITEM_CODE, //POINTBURN_ITEM_CODE --> MBRDC
+						req.body.POINTBURN_TYPE, //POINTBUTN_TYPE --> MBFLG
+						get_mbrecn().toString(), //MBRECN (random)
+						get_mbrun(), //MBRUN (random)
+						parseInt(req.body.POINTBURN_MPOINT), //POINTBURN_MPOINT --> MBPOINT S(12)
+						parseInt(req.body.POINTBURN_PIECE), //POINTBURN_PIECE --> MBPIE S(4)
+						req.body.POINTBURN_FLAG, //POINTBURN_FLAG --> MBFLG
+						parseInt(req.body.POINTBURN_MILE), //POINTBURN_MILE --> MBMILE
+						parseInt(cal_POINTBURN),
+						parseInt(req.body.POINTBURN_EDC_DISCOUNT_AMT),
+						parseInt(req.body.POINTBURN_ITEM_ADD_AMT),
+						req.body.POINTBURN_APPV_NUM,
+						req.body.POINTBURN_EDC_REFERENCE_NUM,
+						req.body.POINTBURN_EDC_TERMINAL,
+						parseInt(req.body.POINTBURN_EDC_SALE_AMOUNT),
+						req.body.POINTBURN_EDC_RATE
+					];
 
-                var point_log_stmt = "insert into MBRFLIB/MCRR1P";
-                point_log_stmt += "(MBAPP,MBCODE,MBBRH,MBDAT,MBRDC,MBTYR,MBRECN,MBRUN,MBPOINT,MBPIE,MBFLG,MBMILE,MBPOIND,MBAMTDP,MBAMA,MBAPVO,MBREFT,TERMINAL3,MBSAMT,MBRATE)";
-                point_log_stmt += " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-                var point_log_params = [
-                    (current_point_result[0].MBCODE).substring(15, (current_point_result[0].MBCODE).length),
-                    current_point_result[0].MBCODE,
-                    parseInt(req.body.POINTBURN_BRANCH), //POINTBURN_BRANCH --> MBBRH
-                    0,
-                    req.body.POINTBURN_ITEM_CODE, //POINTBURN_ITEM_CODE --> MBRDC
-                    req.body.POINTBURN_TYPE, //POINTBUTN_TYPE --> MBFLG
-                    get_mbrecn().toString(), //MBRECN (random)
-                    get_mbrun(), //MBRUN (random)
-                    parseInt(req.body.POINTBURN_MPOINT), //POINTBURN_MPOINT --> MBPOINT S(12)
-                    parseInt(req.body.POINTBURN_PIECE), //POINTBURN_PIECE --> MBPIE S(4)
-                    req.body.POINTBURN_FLAG, //POINTBURN_FLAG --> MBFLG
-                    parseInt(req.body.POINTBURN_MILE), //POINTBURN_MILE --> MBMILE
-                    parseInt(cal_POINTBURN),
-                    parseInt(req.body.POINTBURN_EDC_DISCOUNT_AMT),
-                    parseInt(req.body.POINTBURN_ITEM_ADD_AMT),
-                    req.body.POINTBURN_APPV_NUM,
-                    req.body.POINTBURN_EDC_REFERENCE_NUM,
-                    req.body.POINTBURN_EDC_TERMINAL,
-                    parseInt(req.body.POINTBURN_EDC_SALE_AMOUNT),
-                    req.body.POINTBURN_EDC_RATE
-                ];
+					//MCRR2P - not implemented yet
+					//point_log2_stmt = "";
 
-                //MCRR2P - not implemented yet
-                //point_log2_stmt = "";
+					pool.update(point_master_stmt, point_master_params)
+						.then(function(master_result) {
+							console.log(master_result);
 
-                pool.update(point_master_stmt, point_master_params)
-                    .then(function(master_result) {
-                        console.log(master_result);
-
-                        pool.insertAndGetId(point_log_stmt, point_log_params)
-                            .then(function(log_result) {
-                                console.log(log_result);
+							pool.insertAndGetId(point_log_stmt, point_log_params)
+								.then(function(log_result) {
+									console.log(log_result);
 
 
-                                res.json({
-                                    "RESP_SYSCDE": "",
-                                    "RESP_DATETIME": date_str,
-                                    "RESP_CDE": 101,
-                                    "MCARD_NUM": current_point_result[0].MBCODE,
-                                    "CARD_TYPE": current_point_result[0].MBMEMC,
-                                    "CARD_EXPIRY_DATE": current_point_result[0].MBEXP,
-                                    "CARD_POINT_BALANCE": cal_MBPOINT.toString(),
-                                    "CARD_POINT_EXPIRY": current_point_result[0].MBCEXP,
-                                    "CARD_POINT_EXP_DATE": current_point_result[0].MBDATT,
-                                    "POINTBURN_MPOINT_SUCCESS": cal_POINTBURN
-                                });
-                            })
-                            .fail(function(log_error) {
-								console.log("ERROR");
-								console.log(log_error);
-                                res.status(500);
-                                res.json({
-                                    "RESP_SYSCDE": "",
-                                    "RESP_DATETIME": date_str,
-                                    "RESP_CDE": 500,
-                                    "MCARD_NUM": "",
-                                    "CARD_TYPE": "",
-                                    "CARD_EXPIRY_DATE": "",
-                                    "CARD_POINT_BALANCE": "",
-                                    "CARD_POINT_EXPIRY": "",
-                                    "CARD_POINT_EXP_DATE": "",
-                                    "POINTBURN_MPOINT_SUCCESS": "0"
-                                });
-                            });
-                    })
-                    .fail(function(master_error) {
-                        res.status(500);
-                        res.json({
-                            "RESP_SYSCDE": "",
-                            "RESP_DATETIME": date_str,
-                            "RESP_CDE": 500,
-                            "MCARD_NUM": "",
-                            "CARD_TYPE": "",
-                            "CARD_EXPIRY_DATE": "",
-                            "CARD_POINT_BALANCE": "",
-                            "CARD_POINT_EXPIRY": "",
-                            "CARD_POINT_EXP_DATE": "",
-                            "POINTBURN_MPOINT_SUCCESS": "0"
-                        });
-                    });
+									res.json({
+										"RESP_SYSCDE": "",
+										"RESP_DATETIME": date_str,
+										"RESP_CDE": 101,
+										"MCARD_NUM": current_point_result[0].MBCODE,
+										"CARD_TYPE": current_point_result[0].MBMEMC,
+										"CARD_EXPIRY_DATE": current_point_result[0].MBEXP,
+										"CARD_POINT_BALANCE": cal_MBPOINT.toString(),
+										"CARD_POINT_EXPIRY": current_point_result[0].MBCEXP,
+										"CARD_POINT_EXP_DATE": current_point_result[0].MBDATT,
+										"POINTBURN_MPOINT_SUCCESS": cal_POINTBURN
+									});
+								})
+								.fail(function(log_error) {
+									console.log("ERROR");
+									console.log(log_error);
+									res.status(500);
+									/*
+									res.json({
+										"RESP_SYSCDE": "",
+										"RESP_DATETIME": date_str,
+										"RESP_CDE": 500,
+										"MCARD_NUM": "",
+										"CARD_TYPE": "",
+										"CARD_EXPIRY_DATE": "",
+										"CARD_POINT_BALANCE": "",
+										"CARD_POINT_EXPIRY": "",
+										"CARD_POINT_EXP_DATE": "",
+										"POINTBURN_MPOINT_SUCCESS": "0"
+									});*/
+								});
+						})
+						.fail(function(master_error) {
+							res.status(500);
+							/*
+							res.json({
+								"RESP_SYSCDE": "",
+								"RESP_DATETIME": date_str,
+								"RESP_CDE": 500,
+								"MCARD_NUM": "",
+								"CARD_TYPE": "",
+								"CARD_EXPIRY_DATE": "",
+								"CARD_POINT_BALANCE": "",
+								"CARD_POINT_EXPIRY": "",
+								"CARD_POINT_EXP_DATE": "",
+								"POINTBURN_MPOINT_SUCCESS": "0"
+							});*/
+						});
+					
+				}
+                
 
             } else if (current_point_result.length > 1) {
                 // 102 - more than 1 card
@@ -743,6 +849,7 @@ app.post('/redeem_mpoint', function(req, res) {
         })
         .fail(function(error) {
             res.status(500);
+			/*
             res.json({
                 "RESP_SYSCDE": "",
                 "RESP_DATETIME": date_str,
@@ -754,7 +861,7 @@ app.post('/redeem_mpoint', function(req, res) {
                 "CARD_POINT_EXPIRY": "",
                 "CARD_POINT_EXP_DATE": "",
                 "POINTBURN_MPOINT_SUCCESS": "0"
-            });
+            });*/
         });
 
 });

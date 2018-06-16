@@ -574,7 +574,8 @@ app.post('/redeem_mpoint', function(req, res) {
     req.body.POINTBURN_AIRLINECODE*/
 
     if ( (typeof req.body.PARTNER_ID == 'undefined') || (typeof req.body.PARTNER_NBR == 'undefined') || (typeof req.body.POINTBURN_TYPE == 'undefined') ) {
-      res.status(400);
+      console.log('Field Error Partner');
+	  res.status(400);
       res.end();
 
     }
@@ -585,14 +586,26 @@ app.post('/redeem_mpoint', function(req, res) {
     current_point_stmt += " from MBRFLIB/MVM01P MVM01P";
     current_point_stmt += " inner join MBRFLIB/PM200MP PM200MP on MVM01P.MBCODE = PM200MP.MBCODE";
     current_point_stmt += " inner join MBRFLIB/MCRS2P MCRS2P on MVM01P.MBCODE = MCRS2P.MBCODE";
-    current_point_stmt += " where PM200MP.PNID = '" + req.body.PARTNER_ID + "' and PM200MP.PNNUM ='" + req.body.PARTNER_NBR + "'";
+    current_point_stmt += " where PM200MP.PNID = '10200' and PM200MP.PNNUM ='" + req.body.PARTNER_NBR + "'";
     pool.query(current_point_stmt)
         .then(function(current_point_result) {
             console.log(current_point_result);
 
             //MCRS2P
             var cal_POINTBURN = 0;
-            if (req.body.POINTBURN_TYPE == "DP") {
+			var POINTBURN_BRANCH_ = 0;
+			var POINTBURN_ITEM_CODE_ = "";
+			var POINTBURN_MPOINT_ = 0;
+			var POINTBURN_PIECE_ = 0;
+			var POINTBURN_MILE_ = 0;
+			var POINTBURN_EDC_DISCOUNT_AMT_ = 0;
+			var POINTBURN_ITEM_ADD_AMT_ =0;
+			var POINTBURN_APPV_NUM_ = "";
+			var POINTBURN_EDC_REFERENCE_NUM_ = "";
+			var POINTBURN_EDC_TERMINAL_ = "";
+			var POINTBURN_EDC_SALE_AMOUNT_ = 0;
+			var POINTBURN_EDC_RATE ="";
+            if (req.body.POINTBURN_TYPE == "DP") {				
               if ( (typeof req.body.POINTBURN_FLAG == 'undefined')
                   || (typeof req.body.POINTBURN_BRANCH == 'undefined')
                   || (typeof req.body.POINTBURN_DEPT == 'undefined')
@@ -607,9 +620,21 @@ app.post('/redeem_mpoint', function(req, res) {
                   || (typeof req.body.POINTBURN_EDC_DISCOUNT_AMT == 'undefined')
                   || (typeof req.body.POINTBURN_EDC_TERMINAL == 'undefined')
                   || (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+				console.log('Field Error DP');
                 res.status(400);
                 res.end();
               }
+			  else{
+				POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
+				POINTBURN_ITEM_CODE_ = req.body.POINTBURN_ITEM_CODE;
+				POINTBURN_MPOINT_ = parseInt(req.body.POINTBURN_MPOINT);
+				POINTBURN_EDC_DISCOUNT_AMT_ = parseInt(req.body.POINTBURN_EDC_DISCOUNT_AMT);
+				POINTBURN_APPV_NUM_ = req.body.POINTBURN_APPV_NUM;
+				POINTBURN_EDC_REFERENCE_NUM_ = req.body.POINTBURN_EDC_REFERENCE_NUM;
+				POINTBURN_EDC_TERMINAL_ = req.body.POINTBURN_EDC_TERMINAL;
+				POINTBURN_EDC_SALE_AMOUNT_ = parseInt(req.body.POINTBURN_EDC_SALE_AMOUNT);
+				POINTBURN_EDC_RATE = req.body.POINTBURN_EDC_RATE;
+			  }
 
                 cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT);
             }
@@ -621,9 +646,16 @@ app.post('/redeem_mpoint', function(req, res) {
                   || (typeof req.body.POINTBURN_MILE == 'undefined')
                   || (typeof req.body.POINTBURN_AIRLINECODE == 'undefined')
                   || (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+				console.log('Field Error MI');
                 res.status(400);
                 res.end();
               }
+			  else{
+				POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
+				POINTBURN_ITEM_CODE_ = req.body.POINTBURN_ITEM_CODE;
+				POINTBURN_MILE_ = parseInt(req.body.POINTBURN_MILE);
+				POINTBURN_MPOINT_ = parseInt(req.body.POINTBURN_MPOINT);
+			  }
 
                 cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT) * parseInt(req.body.POINTBURN_MILE);
             }
@@ -635,9 +667,16 @@ app.post('/redeem_mpoint', function(req, res) {
                   || (typeof req.body.POINTBURN_PIECE == 'undefined')
                   || (typeof req.body.POINTBURN_ITEM_AMT == 'undefined')
                   || (typeof req.body.POINTBURN_MPOINT == 'undefined') ) {
+				console.log('Field Error CC');
                 res.status(400);
                 res.end();
               }
+			  else{
+				POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
+				POINTBURN_ITEM_CODE_ = req.body.POINTBURN_ITEM_CODE;
+				POINTBURN_PIECE_ = parseInt(req.body.POINTBURN_PIECE);
+				POINTBURN_MPOINT_ = parseInt(req.body.POINTBURN_MPOINT);
+			  }
                 cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT) * parseInt(req.body.POINTBURN_PIECE);
             }
             else if (req.body.POINTBURN_TYPE == "SP") {
@@ -649,9 +688,16 @@ app.post('/redeem_mpoint', function(req, res) {
                   || (typeof req.body.POINTBURN_ITEM_ADD_AMT == 'undefined')
                   || (typeof req.body.POINTBURN_PIECE == 'undefined')
                   || (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+				console.log('Field Error SP');
                 res.status(400);
                 res.end();
               }
+			  else{
+				POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
+				POINTBURN_ITEM_CODE_ = req.body.POINTBURN_ITEM_CODE;
+				POINTBURN_PIECE_ = parseInt(req.body.POINTBURN_PIECE);
+				POINTBURN_MPOINT_ = parseInt(req.body.POINTBURN_MPOINT);
+			  }
                 cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT) * parseInt(req.body.POINTBURN_PIECE);
             }
 			
@@ -663,9 +709,16 @@ app.post('/redeem_mpoint', function(req, res) {
                   || (typeof req.body.POINTBURN_PIECE == 'undefined')
                   || (typeof req.body.POINTBURN_VENDER == 'undefined')
                   || (typeof req.body.POINTBURN_MPOINT == 'undefined')) {
+				console.log('Field Error PR');
                 res.status(400);
                 res.end();
               }
+			  else{
+				POINTBURN_BRANCH_ = req.body.POINTBURN_BRANCH;
+				POINTBURN_ITEM_CODE_ = req.body.POINTBURN_ITEM_CODE;
+				POINTBURN_PIECE_ = parseInt(req.body.POINTBURN_PIECE);
+				POINTBURN_MPOINT_ = parseInt(req.body.POINTBURN_MPOINT);
+			  }
                 cal_POINTBURN = parseInt(req.body.POINTBURN_MPOINT) * parseInt(req.body.POINTBURN_PIECE);
             }
             else{
@@ -685,11 +738,11 @@ app.post('/redeem_mpoint', function(req, res) {
             // Now, MBPOINT (net point) is sufficient
 
             if (current_point_result.length <= 0) {
-                //301
+                //302 - no mcard
                 res.json({
                     "RESP_SYSCDE": "",
                     "RESP_DATETIME": date_str,
-                    "RESP_CDE": 301,
+                    "RESP_CDE": 302,
                     "MCARD_NUM": "",
                     "CARD_TYPE": "",
                     "CARD_EXPIRY_DATE": "",
@@ -732,7 +785,7 @@ app.post('/redeem_mpoint', function(req, res) {
 					var point_log_params = [
 						(current_point_result[0].MBCODE).substring(15, (current_point_result[0].MBCODE).length),
 						current_point_result[0].MBCODE,
-						parseInt(req.body.POINTBURN_BRANCH), //POINTBURN_BRANCH --> MBBRH
+						/*parseInt(req.body.POINTBURN_BRANCH), //POINTBURN_BRANCH --> MBBRH
 						0,
 						req.body.POINTBURN_ITEM_CODE, //POINTBURN_ITEM_CODE --> MBRDC
 						req.body.POINTBURN_TYPE, //POINTBUTN_TYPE --> MBFLG
@@ -749,11 +802,34 @@ app.post('/redeem_mpoint', function(req, res) {
 						req.body.POINTBURN_EDC_REFERENCE_NUM,
 						req.body.POINTBURN_EDC_TERMINAL,
 						parseInt(req.body.POINTBURN_EDC_SALE_AMOUNT),
-						req.body.POINTBURN_EDC_RATE
+						req.body.POINTBURN_EDC_RATE*/
+						POINTBURN_BRANCH_, //POINTBURN_BRANCH --> MBBRH
+						0,
+						POINTBURN_ITEM_CODE_, //POINTBURN_ITEM_CODE --> MBRDC
+						req.body.POINTBURN_TYPE, //POINTBUTN_TYPE --> MBFLG
+						get_mbrecn().toString(), //MBRECN (random)
+						get_mbrun(), //MBRUN (random)
+						parseInt(req.body.POINTBURN_MPOINT), //POINTBURN_MPOINT --> MBPOINT S(12)
+						POINTBURN_PIECE_, //POINTBURN_PIECE --> MBPIE S(4)
+						req.body.POINTBURN_FLAG, //POINTBURN_FLAG --> MBFLG
+						POINTBURN_MILE_, //POINTBURN_MILE --> MBMILE
+						parseInt(cal_POINTBURN),
+						POINTBURN_EDC_DISCOUNT_AMT_,
+						POINTBURN_ITEM_ADD_AMT_,
+						POINTBURN_APPV_NUM_,
+						POINTBURN_EDC_REFERENCE_NUM_,
+						POINTBURN_EDC_TERMINAL_,
+						POINTBURN_EDC_SALE_AMOUNT_,
+						POINTBURN_EDC_RATE
 					];
 
 					//MCRR2P - not implemented yet
 					//point_log2_stmt = "";
+					console.log('point_log_stmt');
+					console.log(point_log_stmt);
+					console.log('point_log_params');
+					console.log(point_log_params);
+					
 
 					pool.update(point_master_stmt, point_master_params)
 						.then(function(master_result) {
@@ -778,7 +854,7 @@ app.post('/redeem_mpoint', function(req, res) {
 									});
 								})
 								.fail(function(log_error) {
-									console.log("ERROR");
+									console.log("ERROR UPDATE");
 									console.log(log_error);
 									res.status(500);
 									/*
@@ -798,8 +874,7 @@ app.post('/redeem_mpoint', function(req, res) {
 						})
 						.fail(function(master_error) {
 							res.status(500);
-							/*
-							res.json({
+							/*res.json({
 								"RESP_SYSCDE": "",
 								"RESP_DATETIME": date_str,
 								"RESP_CDE": 500,
@@ -849,8 +924,7 @@ app.post('/redeem_mpoint', function(req, res) {
         })
         .fail(function(error) {
             res.status(500);
-			/*
-            res.json({
+            /*res.json({
                 "RESP_SYSCDE": "",
                 "RESP_DATETIME": date_str,
                 "RESP_CDE": 500,

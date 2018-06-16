@@ -51,7 +51,7 @@ app.get('/test2', function(req, res) {
      point_master_stmt += " where MBCODE=7109000900003026";
      var point_master_params = [ 0,200000,200000 ];
      //MCRR2P - not implemented yet
-     //point_log2_stmt = ""; 
+     //point_log2_stmt = "";
 	console.log("UPDATE");
      pool.update(point_master_stmt, point_master_params)
          .then(function(master_result) {
@@ -112,6 +112,26 @@ app.get('/test4', function(req, res) {
 
 
 app.post('/inquiry_mpoint', function(req, res) {
+  var date_str = '';
+  var today = new Date();
+  date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth()+1) < 10 ? '0' : '').toString() + (today.getUTCMonth()+1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
+
+  if ( (typeof req.body.PARTNER_ID == 'undefined') || (typeof req.body.PARTNER_NBR == 'undefined')) {
+    res.status(400);
+    res.json({
+        "RESP_SYSCDE": "",
+        "RESP_DATETIME": date_str,
+        "RESP_CDE": 400,
+        "MCARD_NUM": "",
+        "CARD_TYPE": "",
+        "CARD_EXPIRY_DATE": "",
+        "CARD_POINT_BALANCE": "",
+        "CARD_POINT_EXPIRY": "",
+        "CARD_POINT_EXP_DATE": "",
+        "POINTBURN_MPOINT_SUCCESS": "0"
+    });
+  }
+
     var stmt = "select MVM01P.MBCODE,MVM01P.MBMEMC,MVM01P.MBEXP,";
     stmt += " MCRS2P.MBPOINT,MCRS2P.MBCEXP,MCRS2P.MBDATT,";
     stmt += " MVM01P.MBTTLE,MVM01P.MBTNAM,MVM01P.MBTSUR,";
@@ -211,13 +231,28 @@ app.post('/inquiry_mpoint', function(req, res) {
 });
 //cz
 app.post('/inquiry_mpoint_byid', function(req, res) {
+  var date_str = '';
+  var today = new Date();
+  date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth()+1) < 10 ? '0' : '').toString() + (today.getUTCMonth()+1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
 
+  if ( (typeof req.body.CUST_COUNTRYCODE == 'undefined') || (typeof req.body.CUST_ID == 'undefined')) {
+    res.status(400);
+    res.json({
+        "RESP_SYSCDE": "",
+        "RESP_DATETIME": date_str,
+        "RESP_CDE": 400,
+        "MCARD_NUM": "",
+        "CARD_TYPE": "",
+        "CARD_EXPIRY_DATE": "",
+        "CARD_POINT_BALANCE": "",
+        "CARD_POINT_EXPIRY": "",
+        "CARD_POINT_EXP_DATE": "",
+        "POINTBURN_MPOINT_SUCCESS": "0"
+    });
+  }
     var cntry = '';
     var custid = '';
     var trigger = 1;
-	var date_str = '';
-	var today = new Date();
-	date_str = today.getUTCFullYear().toString() + ((today.getUTCMonth()+1) < 10 ? '0' : '').toString() + (today.getUTCMonth()+1).toString() + (today.getUTCDate() < 10 ? '0' : '').toString() + today.getUTCDate();
     if (req.body.CUST_COUNTRYCODE == '') {
         trigger = 0;
     } else {
@@ -421,7 +456,7 @@ app.post('/redeem_mpoint', function(req, res) {
     req.body.POINTBURN_MPOINT
     req.body.POINTBURN_PIECE
 
-    
+
     req.body.POINTBURN_ITEM_AMT
     req.body.POINTBURN_ITEM_ADD_AMT
     req.body.POINTBURN_MILE
@@ -521,7 +556,7 @@ app.post('/redeem_mpoint', function(req, res) {
                 ];
 
                 //MCRR2P - not implemented yet
-                //point_log2_stmt = ""; 
+                //point_log2_stmt = "";
 
                 pool.update(point_master_stmt, point_master_params)
                     .then(function(master_result) {
@@ -661,6 +696,5 @@ function get_mbrecn() {
 function get_mbrun() {
     return Math.floor(Math.random() * 100);
 }
-
 
 module.exports = app;

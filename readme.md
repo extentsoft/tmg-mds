@@ -13,7 +13,3 @@ test
 1. Log = winston
 2. Live update = nodemon
 3. Path management = app-root-path
-
-
-
-Cobrand 
